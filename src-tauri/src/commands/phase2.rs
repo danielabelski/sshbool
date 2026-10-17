@@ -926,9 +926,21 @@ pub async fn rdp_launch_native(
         let h = height.unwrap_or(1080);
         let bpp = color_depth.unwrap_or(32);
 
+        let domain_line = if d.is_empty() {
+            String::new()
+        } else {
+            format!("domain:s:{d}\r\n")
+        };
+        let domain_param = if d.is_empty() {
+            String::new()
+        } else {
+            format!("&domain=s:{d}")
+        };
+
         let rdp_content = format!(
             "full address:s:{connect_addr}\r\n\
              username:s:{u}\r\n\
+             {domain_line}\
              prompt for credentials:i:0\r\n\
              authentication level:i:0\r\n\
              redirectclipboard:i:{clipboard_val}\r\n\
@@ -947,7 +959,7 @@ pub async fn rdp_launch_native(
             let _ = Command::new("open").arg(&temp_path).spawn();
         } else {
             let url = format!(
-                "rdp://full%20address=s:{connect_addr}&username=s:{u}&redirectclipboard=i:{clipboard_val}&smartsizing=i:{sizing_val}&desktopwidth=i:{w}&desktopheight=i:{h}&bpp=i:{bpp}"
+                "rdp://full%20address=s:{connect_addr}&username=s:{u}{domain_param}&redirectclipboard=i:{clipboard_val}&smartsizing=i:{sizing_val}&desktopwidth=i:{w}&desktopheight=i:{h}&bpp=i:{bpp}"
             );
             let _ = Command::new("open").arg(&url).spawn();
         }
@@ -982,6 +994,9 @@ pub async fn rdp_launch_native(
             format!("/u:{u}"),
             "/cert:tofu".to_string(),
         ];
+        if !d.is_empty() {
+            args.push(format!("/d:{d}"));
+        }
         if has_pass {
             args.push("/from-stdin:force".to_string());
         }

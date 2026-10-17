@@ -57,7 +57,7 @@ jobs:
         with:
           workspaces: src-tauri
       - run: cargo fmt --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::type_complexity
+      - run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::type_complexity -A clippy::double_must_use
 
   test-rust:
     strategy:

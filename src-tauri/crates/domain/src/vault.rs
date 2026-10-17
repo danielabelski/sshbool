@@ -57,6 +57,7 @@ pub struct CredentialMeta {
 
 /// Port for vault operations.
 #[async_trait]
+#[allow(clippy::double_must_use)]
 pub trait VaultPort: Send + Sync {
     /// Current status.
     async fn status(&self) -> Result<VaultStatus, DomainError>;

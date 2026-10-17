@@ -2,6 +2,7 @@
 
 #![deny(warnings)]
 #![warn(missing_docs)]
+#![allow(clippy::double_must_use)]
 
 pub mod connections;
 pub mod error;

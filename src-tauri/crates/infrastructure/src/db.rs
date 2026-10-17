@@ -120,6 +120,12 @@ const EMBEDDED_MIGRATIONS: &[(&str, &str)] = &[
         include_str!("../../../migrations/0018_reset_unverified_known_hosts.sql"),
     ),
     ("0019_mcp", include_str!("../../../migrations/0019_mcp.sql")),
+    // Re-apply 0019 for databases where the legacy backfill recorded it without running it
+    // (missing `hosts.production` / `mcp_*` tables). The SQL is idempotent, so this is a no-op elsewhere.
+    (
+        "0020_reapply_mcp",
+        include_str!("../../../migrations/0019_mcp.sql"),
+    ),
 ];
 
 async fn ensure_migration_table(pool: &SqlitePool) -> Result<(), DomainError> {
@@ -173,8 +179,11 @@ async fn backfill_legacy_migrations(pool: &SqlitePool) -> Result<(), DomainError
     .await
     .map_err(|e| DomainError::Crypto(format!("legacy schema probe: {e}")))?;
 
+    // A legacy database may predate some embedded migrations, so run every one
+    // (they are all idempotent) instead of only recording them as applied.
     if hosts_table.map(|(count,)| count > 0).unwrap_or(false) {
-        for (id, _) in EMBEDDED_MIGRATIONS {
+        for (id, sql) in EMBEDDED_MIGRATIONS {
+            run_migration_sql(pool, id, sql).await?;
             record_migration(pool, id).await?;
         }
     }
